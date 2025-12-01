@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>conversor de imágenes a webp</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="8" fill="#9333ea"/>
+            <path d="M12 16L20 12L28 16V28L20 32L12 28V16Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="20" cy="20" r="3" fill="white"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1>conversor de imágenes a webp</h1>
+          <p>optimización automática para web</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Upload Area -->
+    <div class="upload-area" id="uploadArea">
+      <svg class="upload-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+      <h3>arrastra imágenes aquí</h3>
+      <p>o haz clic para seleccionar archivos jpg/png</p>
+      <button class="btn-primary" id="selectBtn">seleccionar archivos</button>
+      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png" multiple hidden>
+    </div>
+
+    <!-- Processing Info -->
+    <div class="info-box">
+      <h4>procesamiento automático:</h4>
+      <ul>
+        <li>formato de salida: <strong>webp</strong></li>
+        <li>calidad: <strong>85%</strong> (óptima para web)</li>
+        <li>redimensionamiento: <strong>máximo 2000px</strong> (mantiene proporción)</li>
+      </ul>
+    </div>
+
+    <!-- Images Grid -->
+    <div id="imagesContainer" class="images-grid" style="display: none;">
+      <div class="grid-header">
+        <h3 id="imageCount">0 imágenes convertidas</h3>
+        <button class="btn-secondary" id="downloadAllBtn">descargar todo (zip)</button>
+      </div>
+      <div id="imagesList" class="images-list"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>ventajas de webp:</h4>
+          <ul>
+            <li>archivos 25-35% más pequeños que jpg/png</li>
+            <li>mantiene excelente calidad visual</li>
+            <li>compatible con todos los navegadores modernos</li>
+            <li>carga más rápida de páginas web</li>
+          </ul>
+        </div>
+        <p class="privacy-note">toda la conversión se hace en tu navegador. tus imágenes no se suben a ningún servidor.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

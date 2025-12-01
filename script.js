@@ -1,0 +1,252 @@
+// Estado global
+const state = {
+  images: [],
+  quality: 0.85,
+  maxDimension: 2000
+};
+
+// Elementos del DOM
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const selectBtn = document.getElementById('selectBtn');
+const imagesContainer = document.getElementById('imagesContainer');
+const imagesList = document.getElementById('imagesList');
+const imageCount = document.getElementById('imageCount');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+// Event Listeners
+selectBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', handleFileSelect);
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', handleDragOver);
+uploadArea.addEventListener('dragleave', handleDragLeave);
+uploadArea.addEventListener('drop', handleDrop);
+downloadAllBtn.addEventListener('click', downloadAll);
+
+// Prevenir clicks en el área cuando se hace clic en el botón
+selectBtn.addEventListener('click', (e) => e.stopPropagation());
+
+// Funciones de manejo de archivos
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  processFiles(files);
+  fileInput.value = ''; // Reset input
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  uploadArea.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  e.preventDefault();
+  uploadArea.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  uploadArea.classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files);
+  processFiles(files);
+}
+
+// Procesar archivos
+async function processFiles(files) {
+  const validFiles = files.filter(file => 
+    file.type === 'image/jpeg' || file.type === 'image/png'
+  );
+
+  if (validFiles.length === 0) {
+    alert('Por favor, selecciona archivos JPG o PNG');
+    return;
+  }
+
+  for (const file of validFiles) {
+    await convertImage(file);
+  }
+
+  updateUI();
+}
+
+// Convertir imagen
+async function convertImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calcular nuevas dimensiones
+        const dimensions = calculateDimensions(img.width, img.height);
+        
+        // Crear canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = dimensions.width;
+        canvas.height = dimensions.height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, dimensions.width, dimensions.height);
+        
+        // Convertir a WebP
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const imageData = {
+              id: Date.now() + Math.random(),
+              originalName: file.name,
+              originalSize: file.size,
+              originalDimensions: { width: img.width, height: img.height },
+              webpBlob: blob,
+              webpSize: blob.size,
+              newDimensions: dimensions,
+              previewUrl: URL.createObjectURL(blob)
+            };
+            
+            state.images.push(imageData);
+            resolve();
+          }
+        }, 'image/webp', state.quality);
+      };
+      
+      img.src = e.target.result;
+    };
+    
+    reader.readAsDataURL(file);
+  });
+}
+
+// Calcular dimensiones manteniendo proporción
+function calculateDimensions(width, height) {
+  const maxDim = state.maxDimension;
+  
+  // Si ambas dimensiones son menores al máximo, mantener original
+  if (width <= maxDim && height <= maxDim) {
+    return { width, height };
+  }
+  
+  // Calcular escala basándose en la dimensión más grande
+  let scale;
+  if (width > height) {
+    scale = maxDim / width;
+  } else {
+    scale = maxDim / height;
+  }
+  
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale)
+  };
+}
+
+// Actualizar UI
+function updateUI() {
+  if (state.images.length === 0) {
+    imagesContainer.style.display = 'none';
+    return;
+  }
+  
+  imagesContainer.style.display = 'block';
+  imageCount.textContent = `${state.images.length} ${state.images.length === 1 ? 'imagen convertida' : 'imágenes convertidas'}`;
+  
+  imagesList.innerHTML = '';
+  state.images.forEach(img => {
+    imagesList.appendChild(createImageCard(img));
+  });
+}
+
+// Crear tarjeta de imagen
+function createImageCard(imageData) {
+  const card = document.createElement('div');
+  card.className = 'image-card';
+  
+  const savings = calculateSavings(imageData.originalSize, imageData.webpSize);
+  const newName = imageData.originalName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  
+  const dimensionsChanged = 
+    imageData.originalDimensions.width !== imageData.newDimensions.width ||
+    imageData.originalDimensions.height !== imageData.newDimensions.height;
+  
+  card.innerHTML = `
+    <div class="image-preview">
+      <img src="${imageData.previewUrl}" alt="${imageData.originalName}">
+    </div>
+    <div class="image-info">
+      <div class="image-name" title="${newName}">${newName}</div>
+      <div class="image-stats">
+        ${dimensionsChanged ? `
+          <div class="stat-row">
+            <span class="stat-label">dimensiones:</span>
+            <span class="stat-value">${imageData.originalDimensions.width}×${imageData.originalDimensions.height} → ${imageData.newDimensions.width}×${imageData.newDimensions.height}</span>
+          </div>
+        ` : `
+          <div class="stat-row">
+            <span class="stat-label">dimensiones:</span>
+            <span class="stat-value">${imageData.newDimensions.width}×${imageData.newDimensions.height}</span>
+          </div>
+        `}
+        <div class="stat-row">
+          <span class="stat-label">original:</span>
+          <span class="stat-value">${formatSize(imageData.originalSize)}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">webp:</span>
+          <span class="stat-value">${formatSize(imageData.webpSize)}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">ahorro:</span>
+          <span class="stat-value stat-savings">${savings}%</span>
+        </div>
+      </div>
+      <button class="btn-download" onclick="downloadImage(${imageData.id})">
+        descargar
+      </button>
+    </div>
+  `;
+  
+  return card;
+}
+
+// Descargar imagen individual
+function downloadImage(id) {
+  const imageData = state.images.find(img => img.id === id);
+  if (!imageData) return;
+  
+  const url = URL.createObjectURL(imageData.webpBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = imageData.originalName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Descargar todas en ZIP
+async function downloadAll() {
+  if (state.images.length === 0) return;
+  
+  const zip = new JSZip();
+  
+  state.images.forEach(imageData => {
+    const filename = imageData.originalName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+    zip.file(filename, imageData.webpBlob);
+  });
+  
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'imagenes-webp.zip';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Utilidades
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function calculateSavings(original, compressed) {
+  const savings = ((original - compressed) / original) * 100;
+  return savings.toFixed(1);
+}
