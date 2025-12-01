@@ -233,11 +233,17 @@ function downloadImage(id) {
 // Descargar todas en ZIP
 async function downloadAll() {
   if (state.images.length === 0) return;
+
+  if (typeof JSZip === 'undefined') {
+    alert('No se pudo cargar la librería de ZIP. Revisa tu conexión y vuelve a intentarlo.');
+    return;
+  }
   
   const zip = new JSZip();
+  const nameCounts = {};
   
   state.images.forEach(imageData => {
-    const filename = imageData.originalName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+    const filename = buildUniqueFilename(imageData.originalName, nameCounts);
     zip.file(filename, imageData.webpBlob);
   });
   
@@ -277,4 +283,12 @@ function formatSize(bytes) {
 function calculateSavings(original, compressed) {
   const savings = ((original - compressed) / original) * 100;
   return savings.toFixed(1);
+}
+
+function buildUniqueFilename(originalName, nameCounts) {
+  const base = originalName.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+  const count = (nameCounts[base] || 0) + 1;
+  nameCounts[base] = count;
+  if (count === 1) return `${base}.webp`;
+  return `${base}-${count}.webp`;
 }
