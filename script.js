@@ -13,6 +13,8 @@ const imagesContainer = document.getElementById('imagesContainer');
 const imagesList = document.getElementById('imagesList');
 const imageCount = document.getElementById('imageCount');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
+const qualitySlider = document.getElementById('qualitySlider');
+const qualityValue = document.getElementById('qualityValue');
 
 // Event Listeners
 selectBtn.addEventListener('click', () => fileInput.click());
@@ -22,9 +24,13 @@ uploadArea.addEventListener('dragover', handleDragOver);
 uploadArea.addEventListener('dragleave', handleDragLeave);
 uploadArea.addEventListener('drop', handleDrop);
 downloadAllBtn.addEventListener('click', downloadAll);
+qualitySlider.addEventListener('input', handleQualityChange);
 
 // Prevenir clicks en el área cuando se hace clic en el botón
 selectBtn.addEventListener('click', (e) => e.stopPropagation());
+
+// Inicializar controles
+initControls();
 
 // Funciones de manejo de archivos
 function handleFileSelect(e) {
@@ -98,6 +104,7 @@ async function convertImage(file) {
               originalDimensions: { width: img.width, height: img.height },
               webpBlob: blob,
               webpSize: blob.size,
+              quality: Math.round(state.quality * 100),
               newDimensions: dimensions,
               previewUrl: URL.createObjectURL(blob)
             };
@@ -193,6 +200,10 @@ function createImageCard(imageData) {
           <span class="stat-value">${formatSize(imageData.webpSize)}</span>
         </div>
         <div class="stat-row">
+          <span class="stat-label">calidad:</span>
+          <span class="stat-value">${imageData.quality}%</span>
+        </div>
+        <div class="stat-row">
           <span class="stat-label">ahorro:</span>
           <span class="stat-value stat-savings">${savings}%</span>
         </div>
@@ -240,6 +251,23 @@ async function downloadAll() {
 }
 
 // Utilidades
+function initControls() {
+  updateQualityUI(Math.round(state.quality * 100));
+}
+
+function handleQualityChange(e) {
+  const value = Number(e.target.value);
+  const clamped = Math.min(Math.max(value, 70), 100);
+  state.quality = clamped / 100;
+  updateQualityUI(clamped);
+}
+
+function updateQualityUI(value) {
+  const rounded = Math.round(value);
+  qualityValue.textContent = `${rounded}%`;
+  qualitySlider.value = rounded;
+}
+
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
