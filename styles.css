@@ -297,13 +297,10 @@ body {
 }
 
 .branding-badge {
-  position: fixed;
-  left: 50%;
-  bottom: 2rem;
-  transform: translateX(-50%);
+  margin: 3rem 0 2rem;
+  text-align: center;
   color: var(--text);
   font-weight: 600;
-  z-index: 10;
 }
 
 .branding-badge a {
@@ -384,7 +381,7 @@ body {
 
 @media (max-width: 640px) {
   .branding-badge {
-    bottom: 1.5rem;
+    margin: 2rem 0 1.5rem;
     font-size: 0.95rem;
   }
 }
