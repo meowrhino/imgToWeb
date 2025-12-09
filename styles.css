@@ -5,10 +5,15 @@
 }
 
 :root {
-  --primary: #9333ea;
-  --primary-dark: #7e22ce;
+  --primary: #7c5aa8;
+  --primary-dark: #6a4b90;
+<<<<<<< ours
+  --bg: #999999;
+  --card: #f0f0f0;
+=======
   --bg: #faf9fb;
   --card: #ffffff;
+>>>>>>> theirs
   --text: #1f2937;
   --text-muted: #6b7280;
   --border: #e5e7eb;
@@ -291,6 +296,22 @@ body {
   font-weight: 600;
 }
 
+.branding-badge {
+  position: fixed;
+  left: 50%;
+  bottom: 2rem;
+  transform: translateX(-50%);
+  color: var(--text);
+  font-weight: 600;
+  z-index: 10;
+}
+
+.branding-badge a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 /* Footer */
 .footer {
   border-top: 1px solid var(--border);
@@ -358,5 +379,12 @@ body {
 
   .control-value {
     min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .branding-badge {
+    bottom: 1.5rem;
+    font-size: 0.95rem;
   }
 }
