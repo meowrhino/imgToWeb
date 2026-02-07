@@ -56,18 +56,50 @@ function handleDrop(e) {
   processFiles(files);
 }
 
+// Tipos MIME soportados
+const SUPPORTED_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/avif'
+];
+
+function isHeic(file) {
+  if (file.type === 'image/heic' || file.type === 'image/heif') return true;
+  return /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name);
+}
+
+function isSupportedFile(file) {
+  return SUPPORTED_TYPES.includes(file.type) || isHeic(file);
+}
+
+// Convertir HEIC a JPEG blob usando heic2any
+async function convertHeicToJpeg(file) {
+  if (typeof heic2any === 'undefined') {
+    alert('No se pudo cargar la librería HEIC. Revisa tu conexión y vuelve a intentarlo.');
+    return null;
+  }
+  try {
+    const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.95 });
+    const result = Array.isArray(blob) ? blob[0] : blob;
+    return new File([result], file.name, { type: 'image/jpeg' });
+  } catch {
+    alert(`No se pudo convertir "${file.name}". El archivo HEIC puede estar dañado.`);
+    return null;
+  }
+}
+
 // Procesar archivos
 async function processFiles(files) {
-  const validFiles = files.filter(file => 
-    file.type === 'image/jpeg' || file.type === 'image/png'
-  );
+  const validFiles = files.filter(isSupportedFile);
 
   if (validFiles.length === 0) {
-    alert('Por favor, selecciona archivos JPG o PNG');
+    alert('Formato no soportado. Usa JPG, PNG, GIF, BMP, AVIF o HEIC');
     return;
   }
 
-  for (const file of validFiles) {
+  for (let file of validFiles) {
+    if (isHeic(file)) {
+      file = await convertHeicToJpeg(file);
+      if (!file) continue;
+    }
     await convertImage(file);
   }
 
@@ -167,7 +199,7 @@ function createImageCard(imageData) {
   card.className = 'image-card';
   
   const savings = calculateSavings(imageData.originalSize, imageData.webpSize);
-  const newName = imageData.originalName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  const newName = imageData.originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif)$/i, '.webp');
   
   const dimensionsChanged = 
     imageData.originalDimensions.width !== imageData.newDimensions.width ||
@@ -225,7 +257,7 @@ function downloadImage(id) {
   const url = URL.createObjectURL(imageData.webpBlob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = imageData.originalName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  a.download = imageData.originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif)$/i, '.webp');
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -286,7 +318,7 @@ function calculateSavings(original, compressed) {
 }
 
 function buildUniqueFilename(originalName, nameCounts) {
-  const base = originalName.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+  const base = originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif|webp)$/i, '');
   const count = (nameCounts[base] || 0) + 1;
   nameCounts[base] = count;
   if (count === 1) return `${base}.webp`;

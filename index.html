@@ -16,9 +16,9 @@
         <line x1="12" y1="3" x2="12" y2="15"/>
       </svg>
       <h3>arrastra imágenes aquí</h3>
-      <p>o haz clic para seleccionar archivos jpg/png</p>
+      <p>o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/heic</p>
       <button class="btn-primary" id="selectBtn">seleccionar archivos</button>
-      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png" multiple hidden>
+      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif" multiple hidden>
     </div>
 
     <!-- Controls -->
@@ -52,6 +52,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
