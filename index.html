@@ -16,32 +16,37 @@
         <line x1="12" y1="3" x2="12" y2="15"/>
       </svg>
       <h3>arrastra imágenes aquí</h3>
-      <p>o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/heic</p>
+      <p>o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/heic/tiff</p>
       <button class="btn-primary" id="selectBtn">seleccionar archivos</button>
-      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif" multiple hidden>
+      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif,image/tiff,.tif,.tiff" multiple hidden>
     </div>
 
-    <!-- Controls -->
-    <div class="controls-panel">
-      <div class="control-card">
-        <div class="control-header">
-          <h4>ajusta la compresión</h4>
-        </div>
-        <div class="control-group">
-          <label for="qualitySlider">calidad webp</label>
-          <div class="control-row">
-            <input type="range" id="qualitySlider" min="70" max="100" step="1" value="85">
-            <span class="control-value" id="qualityValue">85%</span>
-          </div>
-          <p class="control-help">85-95% suele equilibrar bien calidad y peso</p>
-        </div>
+    <!-- Progress Bar -->
+    <div id="progressContainer" class="progress-container" style="display: none;">
+      <div class="progress-info">
+        <span id="progressText">convirtiendo...</span>
+        <span id="progressCount">0/0</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
     </div>
 
     <!-- Images Grid -->
     <div id="imagesContainer" class="images-grid" style="display: none;">
       <div class="grid-header">
-        <h3 id="imageCount">0 imágenes convertidas</h3>
+        <div class="grid-header-left">
+          <select id="qualitySelect" class="quality-select">
+            <option value="0.70">70% — mínima</option>
+            <option value="0.75">75% — baja</option>
+            <option value="0.80">80% — media</option>
+            <option value="0.85" selected>85% — buena</option>
+            <option value="0.90">90% — alta</option>
+            <option value="0.95">95% — máxima</option>
+            <option value="1.00">100% — sin pérdida</option>
+          </select>
+          <h3 id="imageCount">0 imágenes convertidas</h3>
+        </div>
         <button class="btn-secondary" id="downloadAllBtn">descargar todo (zip)</button>
       </div>
       <div id="imagesList" class="images-list"></div>
@@ -53,6 +58,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

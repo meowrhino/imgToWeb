@@ -13,8 +13,11 @@ const imagesContainer = document.getElementById('imagesContainer');
 const imagesList = document.getElementById('imagesList');
 const imageCount = document.getElementById('imageCount');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
-const qualitySlider = document.getElementById('qualitySlider');
-const qualityValue = document.getElementById('qualityValue');
+const qualitySelect = document.getElementById('qualitySelect');
+const progressContainer = document.getElementById('progressContainer');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const progressCount = document.getElementById('progressCount');
 
 // Event Listeners
 selectBtn.addEventListener('click', () => fileInput.click());
@@ -24,13 +27,10 @@ uploadArea.addEventListener('dragover', handleDragOver);
 uploadArea.addEventListener('dragleave', handleDragLeave);
 uploadArea.addEventListener('drop', handleDrop);
 downloadAllBtn.addEventListener('click', downloadAll);
-qualitySlider.addEventListener('input', handleQualityChange);
+qualitySelect.addEventListener('change', (e) => { state.quality = Number(e.target.value); });
 
 // Prevenir clicks en el área cuando se hace clic en el botón
 selectBtn.addEventListener('click', (e) => e.stopPropagation());
-
-// Inicializar controles
-initControls();
 
 // Funciones de manejo de archivos
 function handleFileSelect(e) {
@@ -66,8 +66,13 @@ function isHeic(file) {
   return /\.heic$/i.test(file.name) || /\.heif$/i.test(file.name);
 }
 
+function isTiff(file) {
+  if (file.type === 'image/tiff') return true;
+  return /\.tiff?$/i.test(file.name);
+}
+
 function isSupportedFile(file) {
-  return SUPPORTED_TYPES.includes(file.type) || isHeic(file);
+  return SUPPORTED_TYPES.includes(file.type) || isHeic(file) || isTiff(file);
 }
 
 // Convertir HEIC a JPEG blob usando heic2any
@@ -86,23 +91,115 @@ async function convertHeicToJpeg(file) {
   }
 }
 
+// Convertir TIFF a WebP directamente via canvas (UTIF da RGBA crudo)
+async function convertTiff(file) {
+  if (typeof UTIF === 'undefined') {
+    alert('No se pudo cargar la librería TIFF. Revisa tu conexión y vuelve a intentarlo.');
+    return null;
+  }
+  try {
+    const buffer = await file.arrayBuffer();
+    const ifds = UTIF.decode(buffer);
+    UTIF.decodeImage(buffer, ifds[0]);
+    const page = ifds[0];
+    const rgba = UTIF.toRGBA8(page);
+
+    const width = page.width;
+    const height = page.height;
+    const dimensions = calculateDimensions(width, height);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(width, height);
+    imgData.data.set(new Uint8Array(rgba));
+    ctx.putImageData(imgData, 0, 0);
+
+    // Redimensionar si hace falta
+    if (dimensions.width !== width || dimensions.height !== height) {
+      const resized = document.createElement('canvas');
+      resized.width = dimensions.width;
+      resized.height = dimensions.height;
+      const rCtx = resized.getContext('2d');
+      rCtx.drawImage(canvas, 0, 0, dimensions.width, dimensions.height);
+      return await canvasToResult(resized, file, width, height, dimensions);
+    }
+
+    return await canvasToResult(canvas, file, width, height, dimensions);
+  } catch {
+    alert(`No se pudo convertir "${file.name}". El archivo TIFF puede estar dañado.`);
+    return null;
+  }
+}
+
+function canvasToResult(canvas, file, origW, origH, dimensions) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve({
+          id: Date.now() + Math.random(),
+          originalName: file.name,
+          originalSize: file.size,
+          originalDimensions: { width: origW, height: origH },
+          webpBlob: blob,
+          webpSize: blob.size,
+          quality: Math.round(state.quality * 100),
+          newDimensions: dimensions,
+          previewUrl: URL.createObjectURL(blob)
+        });
+      } else {
+        resolve(null);
+      }
+    }, 'image/webp', state.quality);
+  });
+}
+
+// Progreso
+function showProgress(current, total) {
+  progressContainer.style.display = 'block';
+  const pct = Math.round((current / total) * 100);
+  progressFill.style.width = `${pct}%`;
+  progressCount.textContent = `${current}/${total}`;
+  progressText.textContent = current < total ? 'convirtiendo...' : 'completado';
+}
+
+function hideProgress() {
+  progressContainer.style.display = 'none';
+  progressFill.style.width = '0%';
+}
+
 // Procesar archivos
 async function processFiles(files) {
   const validFiles = files.filter(isSupportedFile);
 
   if (validFiles.length === 0) {
-    alert('Formato no soportado. Usa JPG, PNG, GIF, BMP, AVIF o HEIC');
+    alert('Formato no soportado. Usa JPG, PNG, GIF, BMP, AVIF, HEIC o TIFF');
     return;
   }
 
+  const total = validFiles.length;
+  let processed = 0;
+  showProgress(0, total);
+
   for (let file of validFiles) {
+    if (isTiff(file)) {
+      const result = await convertTiff(file);
+      if (result) state.images.push(result);
+      processed++;
+      showProgress(processed, total);
+      continue;
+    }
     if (isHeic(file)) {
       file = await convertHeicToJpeg(file);
-      if (!file) continue;
+      if (!file) { processed++; showProgress(processed, total); continue; }
     }
     await convertImage(file);
+    processed++;
+    showProgress(processed, total);
   }
 
+  setTimeout(hideProgress, 1500);
   updateUI();
 }
 
@@ -199,7 +296,7 @@ function createImageCard(imageData) {
   card.className = 'image-card';
   
   const savings = calculateSavings(imageData.originalSize, imageData.webpSize);
-  const newName = imageData.originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif)$/i, '.webp');
+  const newName = imageData.originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif|tif|tiff)$/i, '.webp');
   
   const dimensionsChanged = 
     imageData.originalDimensions.width !== imageData.newDimensions.width ||
@@ -257,7 +354,7 @@ function downloadImage(id) {
   const url = URL.createObjectURL(imageData.webpBlob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = imageData.originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif)$/i, '.webp');
+  a.download = imageData.originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif|tif|tiff)$/i, '.webp');
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -289,23 +386,6 @@ async function downloadAll() {
 }
 
 // Utilidades
-function initControls() {
-  updateQualityUI(Math.round(state.quality * 100));
-}
-
-function handleQualityChange(e) {
-  const value = Number(e.target.value);
-  const clamped = Math.min(Math.max(value, 70), 100);
-  state.quality = clamped / 100;
-  updateQualityUI(clamped);
-}
-
-function updateQualityUI(value) {
-  const rounded = Math.round(value);
-  qualityValue.textContent = `${rounded}%`;
-  qualitySlider.value = rounded;
-}
-
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -318,7 +398,7 @@ function calculateSavings(original, compressed) {
 }
 
 function buildUniqueFilename(originalName, nameCounts) {
-  const base = originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif|webp)$/i, '');
+  const base = originalName.replace(/\.(jpg|jpeg|png|gif|bmp|avif|heic|heif|tif|tiff|webp)$/i, '');
   const count = (nameCounts[base] || 0) + 1;
   nameCounts[base] = count;
   if (count === 1) return `${base}.webp`;
