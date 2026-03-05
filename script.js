@@ -6,7 +6,8 @@ const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'i
 const state = {
   images: [],
   quality: 0.85,
-  maxDimension: 2000
+  maxDimension: 2000,
+  sequentialNames: true
 };
 
 // Elementos del DOM
@@ -23,6 +24,7 @@ const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
 const progressCount = document.getElementById('progressCount');
 const progressBar = document.getElementById('progressBar');
+const sequentialRename = document.getElementById('sequentialRename');
 
 // Event listeners
 selectBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
@@ -33,6 +35,10 @@ uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea
 uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); processFiles(Array.from(e.dataTransfer.files)); });
 downloadAllBtn.addEventListener('click', downloadAll);
 qualitySelect.addEventListener('change', (e) => { state.quality = Number(e.target.value); });
+sequentialRename.addEventListener('change', (e) => {
+  state.sequentialNames = e.target.checked;
+  refreshCardNames();
+});
 
 // Pegar desde clipboard (Ctrl+V / Cmd+V)
 document.addEventListener('paste', (e) => {
@@ -73,6 +79,23 @@ function calculateSavings(original, compressed) {
 
 function getWebpName(name) {
   return name.replace(EXT_REGEX, '.webp');
+}
+
+function getDisplayName(imageData) {
+  if (!state.sequentialNames) return getWebpName(imageData.originalName);
+  const index = state.images.indexOf(imageData);
+  return `${index + 1}.webp`;
+}
+
+function refreshCardNames() {
+  state.images.forEach(imageData => {
+    const card = document.querySelector(`.image-card[data-id="${imageData.id}"]`);
+    if (!card) return;
+    const nameEl = card.querySelector('.image-name');
+    const name = getDisplayName(imageData);
+    nameEl.textContent = name;
+    nameEl.title = name;
+  });
 }
 
 function buildUniqueFilename(originalName, nameCounts) {
@@ -309,7 +332,7 @@ function createImageCard(imageData) {
 
   const savings = calculateSavings(imageData.originalSize, imageData.webpSize);
   const savingsNum = parseFloat(savings);
-  const newName = getWebpName(imageData.originalName);
+  const newName = getDisplayName(imageData);
   const dimChanged = imageData.originalDimensions.width !== imageData.newDimensions.width ||
                      imageData.originalDimensions.height !== imageData.newDimensions.height;
 
@@ -375,6 +398,7 @@ function removeImage(id) {
     imagesContainer.style.display = 'none';
   } else {
     imageCount.textContent = `${state.images.length} ${state.images.length === 1 ? 'imagen convertida' : 'imágenes convertidas'}`;
+    if (state.sequentialNames) refreshCardNames();
   }
 }
 
@@ -386,7 +410,7 @@ function downloadImage(id) {
   const url = URL.createObjectURL(imageData.webpBlob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = getWebpName(imageData.originalName);
+  a.download = getDisplayName(imageData);
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -403,8 +427,10 @@ async function downloadAll() {
   const zip = new JSZip();
   const nameCounts = {};
 
-  state.images.forEach(imageData => {
-    const filename = buildUniqueFilename(imageData.originalName, nameCounts);
+  state.images.forEach((imageData, i) => {
+    const filename = state.sequentialNames
+      ? `${i + 1}.webp`
+      : buildUniqueFilename(imageData.originalName, nameCounts);
     zip.file(filename, imageData.webpBlob);
   });
 

@@ -182,6 +182,24 @@ body {
   border-color: var(--border-hover);
 }
 
+/* Rename Toggle */
+.rename-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.rename-toggle input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--text);
+  cursor: pointer;
+}
+
 /* Progress Bar */
 .progress-container {
   background: var(--card);
