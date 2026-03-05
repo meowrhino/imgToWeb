@@ -34,6 +34,24 @@ uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.clas
 downloadAllBtn.addEventListener('click', downloadAll);
 qualitySelect.addEventListener('change', (e) => { state.quality = Number(e.target.value); });
 
+// Pegar desde clipboard (Ctrl+V / Cmd+V)
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  const files = [];
+  for (const item of items) {
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) files.push(file);
+    }
+  }
+  if (files.length > 0) {
+    e.preventDefault();
+    processFiles(files);
+    showNotification(`${files.length} ${files.length === 1 ? 'imagen pegada' : 'imágenes pegadas'} desde el portapapeles`, 'info');
+  }
+});
+
 // Utilidades
 function nextId() { return ++_idCounter; }
 
