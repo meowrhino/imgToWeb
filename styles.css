@@ -442,9 +442,14 @@ body {
 
 /* Branding */
 .branding-badge {
-  margin: 3rem 0 2rem;
+  position: fixed;
+  bottom: 10dvh;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   font-size: 0.65rem;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .branding-badge a {
