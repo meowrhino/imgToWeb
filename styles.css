@@ -390,6 +390,61 @@ body {
   border-left: 3px solid var(--text);
 }
 
+/* Section Separator */
+.section-separator {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 3rem 0;
+}
+
+/* Rename Section */
+.rename-section .upload-area {
+  margin-top: 0;
+}
+
+.rename-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rename-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.65rem;
+  transition: border-color 0.2s ease;
+}
+
+.rename-row:hover {
+  border-color: var(--border-hover);
+}
+
+.rename-original {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+.rename-arrow {
+  color: var(--text-muted);
+  margin: 0 0.5rem;
+  flex-shrink: 0;
+}
+
+.rename-new {
+  color: var(--text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Branding */
 .branding-badge {
   margin: 3rem 0 2rem;

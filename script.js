@@ -415,6 +415,113 @@ function downloadImage(id) {
   URL.revokeObjectURL(url);
 }
 
+// ============================================================================
+// SECCIÓN: SOLO RENOMBRAR
+// ============================================================================
+
+const renameState = {
+  files: [],
+  order: 'upload' // 'upload' or 'alpha'
+};
+
+const renameUploadArea = document.getElementById('renameUploadArea');
+const renameFileInput = document.getElementById('renameFileInput');
+const renameSelectBtn = document.getElementById('renameSelectBtn');
+const renameContainer = document.getElementById('renameContainer');
+const renameList = document.getElementById('renameList');
+const renameCount = document.getElementById('renameCount');
+const renameDownloadBtn = document.getElementById('renameDownloadBtn');
+
+renameSelectBtn.addEventListener('click', (e) => { e.stopPropagation(); renameFileInput.click(); });
+renameUploadArea.addEventListener('click', () => renameFileInput.click());
+renameFileInput.addEventListener('change', (e) => { addRenameFiles(Array.from(e.target.files)); renameFileInput.value = ''; });
+renameUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); renameUploadArea.classList.add('drag-over'); });
+renameUploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); renameUploadArea.classList.remove('drag-over'); });
+renameUploadArea.addEventListener('drop', (e) => { e.preventDefault(); renameUploadArea.classList.remove('drag-over'); addRenameFiles(Array.from(e.dataTransfer.files)); });
+renameDownloadBtn.addEventListener('click', downloadRenamedZip);
+
+document.querySelectorAll('input[name="renameOrder"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    renameState.order = e.target.value;
+    renderRenameList();
+  });
+});
+
+function addRenameFiles(files) {
+  if (files.length === 0) return;
+  renameState.files.push(...files);
+  renderRenameList();
+}
+
+function getExtension(filename) {
+  const dot = filename.lastIndexOf('.');
+  return dot === -1 ? '' : filename.substring(dot);
+}
+
+function getSortedRenameFiles() {
+  const files = [...renameState.files];
+  if (renameState.order === 'alpha') {
+    files.sort((a, b) => a.name.localeCompare(b.name, 'es', { numeric: true }));
+  }
+  return files;
+}
+
+function renderRenameList() {
+  if (renameState.files.length === 0) {
+    renameContainer.style.display = 'none';
+    return;
+  }
+
+  renameContainer.style.display = 'block';
+  renameCount.textContent = `${renameState.files.length} ${renameState.files.length === 1 ? 'archivo' : 'archivos'}`;
+
+  const sorted = getSortedRenameFiles();
+  renameList.innerHTML = '';
+
+  sorted.forEach((file, i) => {
+    const ext = getExtension(file.name);
+    const newName = `${i + 1}${ext}`;
+
+    const row = document.createElement('div');
+    row.className = 'rename-row';
+    row.innerHTML = `
+      <span class="rename-original" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+      <span class="rename-arrow">\u2192</span>
+      <span class="rename-new">${escapeHtml(newName)}</span>
+    `;
+    renameList.appendChild(row);
+  });
+}
+
+async function downloadRenamedZip() {
+  if (renameState.files.length === 0) return;
+
+  if (typeof JSZip === 'undefined') {
+    showNotification('no se pudo cargar la librería zip', 'error');
+    return;
+  }
+
+  const zip = new JSZip();
+  const sorted = getSortedRenameFiles();
+
+  sorted.forEach((file, i) => {
+    const ext = getExtension(file.name);
+    zip.file(`${i + 1}${ext}`, file);
+  });
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'archivos-renombrados.zip';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================================
+// SECCIÓN: CONVERSIÓN (ZIP download)
+// ============================================================================
+
 // Descargar todas en ZIP
 async function downloadAll() {
   if (state.images.length === 0) return;

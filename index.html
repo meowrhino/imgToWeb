@@ -70,6 +70,42 @@
       <div id="imagesList" class="images-list"></div>
     </div>
 
+    <!-- Separator -->
+    <hr class="section-separator">
+
+    <!-- Rename Only Section -->
+    <div class="rename-section">
+      <div class="upload-area" id="renameUploadArea">
+        <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        <h3>solo renombrar</h3>
+        <p>arrastra cualquier archivo para renumerarlo (1, 2, 3...) sin convertir</p>
+        <button class="btn-primary" id="renameSelectBtn">seleccionar archivos</button>
+        <input type="file" id="renameFileInput" multiple hidden>
+      </div>
+
+      <!-- Rename Results -->
+      <div id="renameContainer" class="images-grid" style="display: none;">
+        <div class="grid-header">
+          <div class="grid-header-left">
+            <h3 id="renameCount">0 archivos</h3>
+            <label class="rename-toggle">
+              <input type="radio" name="renameOrder" value="upload" checked>
+              <span>orden de subida</span>
+            </label>
+            <label class="rename-toggle">
+              <input type="radio" name="renameOrder" value="alpha">
+              <span>alfabético</span>
+            </label>
+          </div>
+          <button class="btn-secondary" id="renameDownloadBtn">descargar todo (zip)</button>
+        </div>
+        <div id="renameList" class="rename-list"></div>
+      </div>
+    </div>
+
     <div class="branding-badge">
       <a href="https://meowrhino.studio" target="_blank" rel="noopener noreferrer">meowrhino.studio</a>
     </div>

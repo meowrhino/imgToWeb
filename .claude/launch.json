@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "imgToWeb",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5502"],
+      "port": 5502
+    },
+    {
+      "name": "videoToWeb",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5503", "--directory", "/Users/manu/Documents/GitHub/videoToWeb"],
+      "port": 5503
+    },
+    {
+      "name": "mokakopa",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3001", "--directory", "/Users/manu/Documents/GitHub/mokakopa"],
+      "port": 3001
+    },
+    {
+      "name": "twinMokakopa",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3000", "--directory", "/Users/manu/Documents/GitHub/twinMokakopa"],
+      "port": 3000
+    }
+  ]
+}
