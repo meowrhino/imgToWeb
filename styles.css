@@ -390,16 +390,11 @@ body {
   border-left: 3px solid var(--text);
 }
 
-/* Section Separator */
-.section-separator {
-  border: none;
-  border-top: 1px dashed var(--border);
-  margin: 3rem 0;
-}
-
-/* Rename Section */
-.rename-section .upload-area {
-  margin-top: 0;
+/* Mode Switch Button */
+.mode-switch {
+  display: block;
+  margin: 0.75rem auto 0;
+  text-align: center;
 }
 
 .rename-list {

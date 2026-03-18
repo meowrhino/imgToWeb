@@ -21,60 +21,61 @@
 </head>
 <body>
   <div class="container">
-    <!-- Upload Area -->
-    <div class="upload-area" id="uploadArea">
-      <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="17 8 12 3 7 8"/>
-        <line x1="12" y1="3" x2="12" y2="15"/>
-      </svg>
-      <h3>arrastra imágenes aquí</h3>
-      <p>o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/heic/tiff</p>
-      <button class="btn-primary" id="selectBtn">seleccionar archivos</button>
-      <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif,image/tiff,.tif,.tiff" multiple hidden>
-    </div>
-
-    <!-- Progress Bar -->
-    <div id="progressContainer" class="progress-container" style="display: none;">
-      <div class="progress-info">
-        <span id="progressText">convirtiendo...</span>
-        <span id="progressCount">0/0</span>
+    <!-- VIEW: Convertir a WebP -->
+    <div id="viewConvert">
+      <div class="upload-area" id="uploadArea">
+        <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <h3>arrastra imágenes aquí</h3>
+        <p>o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/heic/tiff</p>
+        <button class="btn-primary" id="selectBtn">seleccionar archivos</button>
+        <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif,image/tiff,.tif,.tiff" multiple hidden>
       </div>
-      <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressBar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-    </div>
 
-    <!-- Images Grid -->
-    <div id="imagesContainer" class="images-grid" style="display: none;">
-      <div class="grid-header">
-        <div class="grid-header-left">
-          <label for="qualitySelect" class="sr-only">calidad de conversión</label>
-          <select id="qualitySelect" class="quality-select">
-            <option value="0.70">70% — mínima</option>
-            <option value="0.75">75% — baja</option>
-            <option value="0.80">80% — media</option>
-            <option value="0.85" selected>85% — buena</option>
-            <option value="0.90">90% — alta</option>
-            <option value="0.95">95% — máxima</option>
-            <option value="1.00">100% — sin pérdida</option>
-          </select>
-          <h3 id="imageCount">0 imágenes convertidas</h3>
-          <label class="rename-toggle">
-            <input type="checkbox" id="sequentialRename" checked>
-            <span>renombrar 1, 2, 3...</span>
-          </label>
+      <button class="btn-secondary mode-switch" id="switchToRename">solo renombrar →</button>
+
+      <!-- Progress Bar -->
+      <div id="progressContainer" class="progress-container" style="display: none;">
+        <div class="progress-info">
+          <span id="progressText">convirtiendo...</span>
+          <span id="progressCount">0/0</span>
         </div>
-        <button class="btn-secondary" id="downloadAllBtn">descargar todo (zip)</button>
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressBar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
       </div>
-      <div id="imagesList" class="images-list"></div>
+
+      <!-- Images Grid -->
+      <div id="imagesContainer" class="images-grid" style="display: none;">
+        <div class="grid-header">
+          <div class="grid-header-left">
+            <label for="qualitySelect" class="sr-only">calidad de conversión</label>
+            <select id="qualitySelect" class="quality-select">
+              <option value="0.70">70% — mínima</option>
+              <option value="0.75">75% — baja</option>
+              <option value="0.80">80% — media</option>
+              <option value="0.85" selected>85% — buena</option>
+              <option value="0.90">90% — alta</option>
+              <option value="0.95">95% — máxima</option>
+              <option value="1.00">100% — sin pérdida</option>
+            </select>
+            <h3 id="imageCount">0 imágenes convertidas</h3>
+            <label class="rename-toggle">
+              <input type="checkbox" id="sequentialRename" checked>
+              <span>renombrar 1, 2, 3...</span>
+            </label>
+          </div>
+          <button class="btn-secondary" id="downloadAllBtn">descargar todo (zip)</button>
+        </div>
+        <div id="imagesList" class="images-list"></div>
+      </div>
     </div>
 
-    <!-- Separator -->
-    <hr class="section-separator">
-
-    <!-- Rename Only Section -->
-    <div class="rename-section">
+    <!-- VIEW: Solo Renombrar -->
+    <div id="viewRename" style="display: none;">
       <div class="upload-area" id="renameUploadArea">
         <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -85,6 +86,8 @@
         <button class="btn-primary" id="renameSelectBtn">seleccionar archivos</button>
         <input type="file" id="renameFileInput" multiple hidden>
       </div>
+
+      <button class="btn-secondary mode-switch" id="switchToConvert">← convertir a webp</button>
 
       <!-- Rename Results -->
       <div id="renameContainer" class="images-grid" style="display: none;">

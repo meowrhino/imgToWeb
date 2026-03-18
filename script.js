@@ -416,6 +416,21 @@ function downloadImage(id) {
 }
 
 // ============================================================================
+// CAMBIO DE VISTA: Convertir ↔ Renombrar
+// ============================================================================
+
+const viewConvert = document.getElementById('viewConvert');
+const viewRename = document.getElementById('viewRename');
+document.getElementById('switchToRename').addEventListener('click', () => {
+  viewConvert.style.display = 'none';
+  viewRename.style.display = 'block';
+});
+document.getElementById('switchToConvert').addEventListener('click', () => {
+  viewRename.style.display = 'none';
+  viewConvert.style.display = 'block';
+});
+
+// ============================================================================
 // SECCIÓN: SOLO RENOMBRAR
 // ============================================================================
 
