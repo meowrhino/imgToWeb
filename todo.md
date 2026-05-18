@@ -9,4 +9,4 @@
 - [ ] pegar desde clipboard (Ctrl+V / Cmd+V)
 - [ ] previsualización A/B (original vs WebP lado a lado)
 - [ ] open graph tags para compartir en redes
-- [ ] drag & drop para reordenar imágenes antes del ZIP
+- [x] drag & drop para reordenar imágenes antes del ZIP

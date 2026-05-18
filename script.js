@@ -40,6 +40,22 @@ sequentialRename.addEventListener('change', (e) => {
   refreshCardNames();
 });
 
+// Drag & drop para reordenar cards de conversión (desktop + touch via SortableJS)
+if (typeof Sortable !== 'undefined') {
+  Sortable.create(imagesList, {
+    animation: 150,
+    ghostClass: 'card-ghost',
+    chosenClass: 'card-chosen',
+    dragClass: 'card-dragging',
+    onEnd: ({ oldIndex, newIndex }) => {
+      if (oldIndex === newIndex) return;
+      const [moved] = state.images.splice(oldIndex, 1);
+      state.images.splice(newIndex, 0, moved);
+      refreshCardNames();
+    }
+  });
+}
+
 // Pegar desde clipboard (Ctrl+V / Cmd+V)
 document.addEventListener('paste', (e) => {
   const items = e.clipboardData?.items;
@@ -506,6 +522,30 @@ function renderRenameList() {
     `;
     renameList.appendChild(row);
   });
+
+  // Sortable se inicializa una sola vez sobre el container, no por fila
+  if (!renameList._sortable && typeof Sortable !== 'undefined') {
+    renameList._sortable = Sortable.create(renameList, {
+      animation: 150,
+      ghostClass: 'card-ghost',
+      chosenClass: 'card-chosen',
+      dragClass: 'card-dragging',
+      onEnd: ({ oldIndex, newIndex }) => {
+        if (oldIndex === newIndex) return;
+        // Si est\u00e1 en alfab\u00e9tico, materializamos ese orden en el array real
+        // y cambiamos a 'upload' para que el reorden manual persista.
+        if (renameState.order === 'alpha') {
+          renameState.files = getSortedRenameFiles();
+          renameState.order = 'upload';
+          const uploadRadio = document.querySelector('input[name="renameOrder"][value="upload"]');
+          if (uploadRadio) uploadRadio.checked = true;
+        }
+        const [moved] = renameState.files.splice(oldIndex, 1);
+        renameState.files.splice(newIndex, 0, moved);
+        renderRenameList();
+      }
+    });
+  }
 }
 
 async function downloadRenamedZip() {
