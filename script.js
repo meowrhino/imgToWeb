@@ -32,7 +32,12 @@ uploadArea.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', (e) => { processFiles(Array.from(e.target.files)); fileInput.value = ''; });
 uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
 uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); });
-uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); processFiles(Array.from(e.dataTransfer.files)); });
+uploadArea.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag-over');
+  const files = await getFilesFromDataTransfer(e.dataTransfer);
+  processFiles(files);
+});
 downloadAllBtn.addEventListener('click', downloadAll);
 qualitySelect.addEventListener('change', (e) => { state.quality = Number(e.target.value); });
 sequentialRename.addEventListener('change', (e) => {
@@ -76,6 +81,42 @@ document.addEventListener('paste', (e) => {
 
 // Utilidades
 function nextId() { return ++_idCounter; }
+
+// Extrae todos los archivos de un DataTransfer, recorriendo carpetas recursivamente.
+// Usa webkitGetAsEntry (soportado en Chrome/Edge/Firefox/Safari). Si no está disponible,
+// cae a dataTransfer.files (sólo archivos sueltos, sin carpetas).
+async function getFilesFromDataTransfer(dataTransfer) {
+  const items = dataTransfer.items;
+  if (!items || !items.length || typeof items[0].webkitGetAsEntry !== 'function') {
+    return Array.from(dataTransfer.files || []);
+  }
+  const entries = [];
+  for (const item of items) {
+    if (item.kind !== 'file') continue;
+    const entry = item.webkitGetAsEntry();
+    if (entry) entries.push(entry);
+  }
+  const files = [];
+  await Promise.all(entries.map((entry) => collectFilesFromEntry(entry, files)));
+  return files;
+}
+
+async function collectFilesFromEntry(entry, files) {
+  if (entry.isFile) {
+    const file = await new Promise((resolve) => entry.file(resolve, () => resolve(null)));
+    if (file) files.push(file);
+    return;
+  }
+  if (entry.isDirectory) {
+    const reader = entry.createReader();
+    // readEntries puede devolver lotes parciales — hay que llamarlo hasta que devuelva vacío.
+    let batch;
+    do {
+      batch = await new Promise((resolve) => reader.readEntries(resolve, () => resolve([])));
+      await Promise.all(batch.map((child) => collectFilesFromEntry(child, files)));
+    } while (batch.length > 0);
+  }
+}
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -468,7 +509,12 @@ renameUploadArea.addEventListener('click', () => renameFileInput.click());
 renameFileInput.addEventListener('change', (e) => { addRenameFiles(Array.from(e.target.files)); renameFileInput.value = ''; });
 renameUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); renameUploadArea.classList.add('drag-over'); });
 renameUploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); renameUploadArea.classList.remove('drag-over'); });
-renameUploadArea.addEventListener('drop', (e) => { e.preventDefault(); renameUploadArea.classList.remove('drag-over'); addRenameFiles(Array.from(e.dataTransfer.files)); });
+renameUploadArea.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  renameUploadArea.classList.remove('drag-over');
+  const files = await getFilesFromDataTransfer(e.dataTransfer);
+  addRenameFiles(files);
+});
 renameDownloadBtn.addEventListener('click', downloadRenamedZip);
 
 document.querySelectorAll('input[name="renameOrder"]').forEach(radio => {
