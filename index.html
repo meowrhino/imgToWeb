@@ -20,6 +20,14 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Aviso en móvil: WebKit (Safari/Brave iOS) no sabe exportar WebP en canvas,
+       así que esta herramienta es de escritorio. Cerrable; se oculta vía CSS en
+       pantallas anchas y el botón × lo descarta del todo. -->
+  <div class="mobile-notice" id="mobileNotice">
+    <span>esta herramienta funciona mejor en <strong>ordenador</strong> — algunos navegadores de móvil (iPhone) no saben exportar WebP de verdad.</span>
+    <button type="button" class="mobile-notice-close" id="mobileNoticeClose" aria-label="cerrar aviso">×</button>
+  </div>
+
   <div class="container">
     <!-- VIEW: Convertir a WebP -->
     <div id="viewConvert">
@@ -115,6 +123,13 @@
     <a href="https://meowrhino.studio" target="_blank" rel="noopener noreferrer">meowrhino.studio</a>
   </div>
 
+  <script>
+    // Cerrar el aviso de móvil (no persiste: reaparece en la próxima visita,
+    // es intencional para que quede claro que es de escritorio).
+    document.getElementById('mobileNoticeClose')?.addEventListener('click', () => {
+      document.getElementById('mobileNotice')?.remove();
+    });
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>

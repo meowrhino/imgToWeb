@@ -218,8 +218,14 @@ async function convertHeicToJpeg(file) {
   }
 }
 
-// Calcular dimensiones manteniendo proporción
+// Calcular dimensiones manteniendo proporción.
+// Valida dims > 0: una imagen corrupta o un TIFF con metadatos inválidos pueden
+// llegar con width/height 0 o negativos → canvas 0×0 → blob inútil. Lanzamos
+// para que el caller lo capture y avise, en vez de producir basura.
 function calculateDimensions(width, height) {
+  if (!(width >= 1) || !(height >= 1)) {
+    throw new Error(`dimensiones inválidas: ${width}×${height}`);
+  }
   const max = state.maxDimension;
   if (width <= max && height <= max) return { width, height };
   const scale = width > height ? max / width : max / height;
@@ -230,21 +236,35 @@ function calculateDimensions(width, height) {
 function canvasToResult(canvas, file, origW, origH, dimensions) {
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
-      if (blob) {
-        resolve({
-          id: nextId(),
-          originalName: file.name,
-          originalSize: file.size,
-          originalDimensions: { width: origW, height: origH },
-          webpBlob: blob,
-          webpSize: blob.size,
-          quality: Math.round(state.quality * 100),
-          newDimensions: dimensions,
-          previewUrl: URL.createObjectURL(blob)
-        });
-      } else {
+      if (!blob) {
         resolve(null);
+        return;
       }
+      // WebKit (Safari y Brave/Chrome en iOS) NO sabe codificar WebP en canvas:
+      // ignora 'image/webp' y devuelve un PNG silenciosamente. Sin esta
+      // comprobación descargaríamos un .webp que por dentro es PNG (más grande,
+      // no es WebP real) sin que el usuario lo sepa. Mejor avisar y descartar
+      // que mentir. (imgToWeb es una herramienta de escritorio; ver el banner
+      // de aviso en móvil.)
+      if (blob.type !== 'image/webp') {
+        showNotification(
+          `tu navegador no sabe exportar a WebP (típico en Safari/iOS). "${file.name}" se omitió.`,
+          'error',
+        );
+        resolve(null);
+        return;
+      }
+      resolve({
+        id: nextId(),
+        originalName: file.name,
+        originalSize: file.size,
+        originalDimensions: { width: origW, height: origH },
+        webpBlob: blob,
+        webpSize: blob.size,
+        quality: Math.round(state.quality * 100),
+        newDimensions: dimensions,
+        previewUrl: URL.createObjectURL(blob)
+      });
     }, 'image/webp', state.quality);
   });
 }
@@ -610,13 +630,22 @@ async function downloadRenamedZip() {
     zip.file(`${i + 1}${ext}`, file);
   });
 
-  const blob = await zip.generateAsync({ type: 'blob' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'archivos-renombrados.zip';
-  a.click();
-  URL.revokeObjectURL(url);
+  // try/catch: si generateAsync falla, sin esto quedaba una promise rejection
+  // sin capturar (y el botón en estado inconsistente). El object URL se libera
+  // en finally pase lo que pase.
+  let url = null;
+  try {
+    const blob = await zip.generateAsync({ type: 'blob' });
+    url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'archivos-renombrados.zip';
+    a.click();
+  } catch (e) {
+    showNotification('no se pudo generar el zip', 'error');
+  } finally {
+    if (url) URL.revokeObjectURL(url);
+  }
 }
 
 // ============================================================================
@@ -642,11 +671,20 @@ async function downloadAll() {
     zip.file(filename, imageData.webpBlob);
   });
 
-  const blob = await zip.generateAsync({ type: 'blob' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'imagenes-webp.zip';
-  a.click();
-  URL.revokeObjectURL(url);
+  // try/catch + finally: misma robustez que downloadRenamedZip (sin esto, un
+  // fallo de generateAsync dejaba una promise rejection sin capturar y el URL
+  // sin revocar).
+  let url = null;
+  try {
+    const blob = await zip.generateAsync({ type: 'blob' });
+    url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'imagenes-webp.zip';
+    a.click();
+  } catch (e) {
+    showNotification('no se pudo generar el zip', 'error');
+  } finally {
+    if (url) URL.revokeObjectURL(url);
+  }
 }
