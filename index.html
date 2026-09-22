@@ -20,33 +20,46 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Aviso en móvil: WebKit (Safari/Brave iOS) no sabe exportar WebP en canvas,
-       así que esta herramienta es de escritorio. Cerrable; se oculta vía CSS en
-       pantallas anchas y el botón × lo descarta del todo. -->
-  <div class="mobile-notice" id="mobileNotice">
-    <span>esta herramienta funciona mejor en <strong>ordenador</strong> — algunos navegadores de móvil (iPhone) no saben exportar WebP de verdad.</span>
-    <button type="button" class="mobile-notice-close" id="mobileNoticeClose" aria-label="cerrar aviso">×</button>
+  <!-- Aviso si el navegador no sabe generar WebP (Safari en Mac, cualquier
+       navegador de iPhone/iPad). Lo muestra js/main.js tras detectarlo. -->
+  <div class="browser-notice" id="browserNotice" hidden>
+    <span>tu navegador no sabe exportar <strong>WebP</strong> de verdad (pasa en Safari y en cualquier navegador de iPhone/iPad). usa Chrome, Firefox o Edge en ordenador. «solo renombrar» sí funciona aquí.</span>
+    <button type="button" class="browser-notice-close" id="browserNoticeClose" aria-label="cerrar aviso">×</button>
   </div>
 
   <div class="container">
     <!-- VIEW: Convertir a WebP -->
-    <div id="viewConvert">
+    <section id="viewConvert">
       <div class="upload-area" id="uploadArea">
         <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="17 8 12 3 7 8"/>
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
-        <h3>arrastra imágenes aquí</h3>
+        <h3>arrastra imágenes o carpetas aquí</h3>
         <p>o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/heic/tiff</p>
-        <button class="btn-primary" id="selectBtn">seleccionar archivos</button>
-        <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif,image/tiff,.tif,.tiff" multiple hidden>
+        <button type="button" class="btn-primary" id="selectBtn">seleccionar archivos</button>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif,image/tiff,.tif,.tiff" multiple hidden>
       </div>
 
-      <button class="btn-secondary mode-switch" id="switchToRename">solo renombrar →</button>
+      <div class="convert-options">
+        <label for="qualitySelect">calidad</label>
+        <select id="qualitySelect" class="quality-select">
+          <option value="0.70">70% — mínima</option>
+          <option value="0.75">75% — baja</option>
+          <option value="0.80">80% — media</option>
+          <option value="0.85" selected>85% — buena</option>
+          <option value="0.90">90% — alta</option>
+          <option value="0.95">95% — máxima</option>
+          <option value="1.00">100% — sin pérdida (chrome)</option>
+        </select>
+        <span class="convert-options-hint">se aplica a las próximas imágenes</span>
+      </div>
+
+      <button type="button" class="btn-secondary mode-switch" id="switchToRename">solo renombrar →</button>
 
       <!-- Progress Bar -->
-      <div id="progressContainer" class="progress-container" style="display: none;">
+      <div id="progressContainer" class="progress-container" hidden>
         <div class="progress-info">
           <span id="progressText">convirtiendo...</span>
           <span id="progressCount">0/0</span>
@@ -57,65 +70,61 @@
       </div>
 
       <!-- Images Grid -->
-      <div id="imagesContainer" class="images-grid" style="display: none;">
+      <div id="imagesContainer" class="images-grid" hidden>
         <div class="grid-header">
           <div class="grid-header-left">
-            <label for="qualitySelect" class="sr-only">calidad de conversión</label>
-            <select id="qualitySelect" class="quality-select">
-              <option value="0.70">70% — mínima</option>
-              <option value="0.75">75% — baja</option>
-              <option value="0.80">80% — media</option>
-              <option value="0.85" selected>85% — buena</option>
-              <option value="0.90">90% — alta</option>
-              <option value="0.95">95% — máxima</option>
-              <option value="1.00">100% — sin pérdida</option>
-            </select>
             <h3 id="imageCount">0 imágenes convertidas</h3>
             <label class="rename-toggle">
               <input type="checkbox" id="sequentialRename" checked>
               <span>renombrar 1, 2, 3...</span>
             </label>
           </div>
-          <button class="btn-secondary" id="downloadAllBtn">descargar todo (zip)</button>
+          <div class="grid-header-actions">
+            <button type="button" class="btn-secondary btn-danger" id="clearImagesBtn">vaciar</button>
+            <button type="button" class="btn-secondary" id="downloadAllBtn">descargar todo (zip)</button>
+          </div>
         </div>
         <div id="imagesList" class="images-list"></div>
       </div>
-    </div>
+    </section>
 
     <!-- VIEW: Solo Renombrar -->
-    <div id="viewRename" style="display: none;">
+    <section id="viewRename" hidden>
       <div class="upload-area" id="renameUploadArea">
         <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
         <h3>solo renombrar</h3>
-        <p>arrastra cualquier archivo para renumerarlo (1, 2, 3...) sin convertir</p>
-        <button class="btn-primary" id="renameSelectBtn">seleccionar archivos</button>
+        <p>arrastra cualquier archivo o carpeta para renumerarlo (1, 2, 3...) sin convertir</p>
+        <button type="button" class="btn-primary" id="renameSelectBtn">seleccionar archivos</button>
         <input type="file" id="renameFileInput" multiple hidden>
       </div>
 
-      <button class="btn-secondary mode-switch" id="switchToConvert">← convertir a webp</button>
+      <button type="button" class="btn-secondary mode-switch" id="switchToConvert">← convertir a webp</button>
 
       <!-- Rename Results -->
-      <div id="renameContainer" class="images-grid" style="display: none;">
+      <div id="renameContainer" class="images-grid" hidden>
         <div class="grid-header">
           <div class="grid-header-left">
             <h3 id="renameCount">0 archivos</h3>
             <label class="rename-toggle">
-              <input type="radio" name="renameOrder" value="upload" checked>
-              <span>orden de subida</span>
+              <input type="radio" name="renameOrder" value="manual" checked>
+              <span>manual</span>
             </label>
             <label class="rename-toggle">
               <input type="radio" name="renameOrder" value="alpha">
               <span>alfabético</span>
             </label>
           </div>
-          <button class="btn-secondary" id="renameDownloadBtn">descargar todo (zip)</button>
+          <div class="grid-header-actions">
+            <button type="button" class="btn-secondary btn-danger" id="clearRenameBtn">vaciar</button>
+            <button type="button" class="btn-secondary" id="renameDownloadBtn">descargar todo (zip)</button>
+          </div>
         </div>
         <div id="renameList" class="rename-list"></div>
       </div>
-    </div>
+    </section>
 
   </div>
 
@@ -123,17 +132,9 @@
     <a href="https://meowrhino.studio" target="_blank" rel="noopener noreferrer">meowrhino.studio</a>
   </div>
 
-  <script>
-    // Cerrar el aviso de móvil (no persiste: reaparece en la próxima visita,
-    // es intencional para que quede claro que es de escritorio).
-    document.getElementById('mobileNoticeClose')?.addEventListener('click', () => {
-      document.getElementById('mobileNotice')?.remove();
-    });
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script src="script.js"></script>
+  <!-- heic2any y UTIF se cargan bajo demanda desde js/loaders.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js" integrity="sha384-BSxuMLxX+FCbTdYec3TbXlnMGEEM2QXTFdtDaveen71o+jswm2J36+xFqp8k4VHM" crossorigin="anonymous"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

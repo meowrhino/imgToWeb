@@ -1,3 +1,7 @@
+[hidden] {
+  display: none !important;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -125,6 +129,16 @@ body {
   border-color: var(--border-hover);
 }
 
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.btn-danger:hover {
+  border-color: var(--error);
+  color: var(--error);
+}
+
 .btn-download {
   padding: 0.4rem 0.9rem;
   background: var(--text);
@@ -158,9 +172,29 @@ body {
   justify-content: center;
 }
 
+.btn-remove-small {
+  padding: 0.25rem;
+  flex-shrink: 0;
+}
+
 .btn-remove:hover {
   border-color: var(--error);
   color: var(--error);
+}
+
+/* Opciones de conversión (visibles antes de subir nada) */
+.convert-options {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: -1rem 0 0;
+  font-size: 0.65rem;
+}
+
+.convert-options-hint {
+  color: var(--text-muted);
 }
 
 /* Quality Select */
@@ -259,6 +293,11 @@ body {
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.grid-header-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .grid-header h3 {
@@ -405,8 +444,8 @@ body {
 
 .rename-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -428,11 +467,11 @@ body {
 
 .rename-arrow {
   color: var(--text-muted);
-  margin: 0 0.5rem;
   flex-shrink: 0;
 }
 
 .rename-new {
+  margin-right: auto;
   color: var(--text);
   font-weight: 600;
   overflow: hidden;
@@ -480,6 +519,10 @@ body {
     align-items: stretch;
   }
 
+  .grid-header-actions > * {
+    flex: 1;
+  }
+
   .notification {
     right: 1rem;
     left: 1rem;
@@ -521,37 +564,35 @@ body {
 }
 
 /* ============================================================ */
-/* Aviso "mejor en escritorio" — sólo visible en móvil          */
+/* Aviso de navegador sin soporte WebP (lo muestra js/main.js)   */
 /* ============================================================ */
-/* Oculto por defecto (escritorio). Se muestra dentro de la media query de
-   móvil más abajo. Así no estorba en el caso de uso principal. */
-.mobile-notice { display: none; }
-
-@media (max-width: 768px) {
-  .mobile-notice {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: #fff7e6;
-    color: #5c4a12;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.85rem;
-    line-height: 1.35;
-  }
-  .mobile-notice-close {
-    margin-left: auto;
-    flex: none;
-    width: 28px;
-    height: 28px;
-    border: none;
-    background: transparent;
-    font-size: 1.3rem;
-    line-height: 1;
-    cursor: pointer;
-    color: inherit;
-    opacity: 0.7;
-  }
-  .mobile-notice-close:hover { opacity: 1; }
+.browser-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 960px;
+  padding: 0.75rem 1rem;
+  background: #fff7e6;
+  color: #5c4a12;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.7rem;
+  line-height: 1.5;
 }
 
+.browser-notice-close {
+  margin-left: auto;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.browser-notice-close:hover { opacity: 1; }

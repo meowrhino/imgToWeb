@@ -6,7 +6,9 @@
 - [ ] reconvertir al cambiar calidad (botón "reconvertir todo")
 - [ ] slider de calidad en vez de select (control más fino)
 - [ ] dimensión máxima configurable (ahora hardcoded a 2000px)
-- [ ] pegar desde clipboard (Ctrl+V / Cmd+V)
+- [x] pegar desde clipboard (Ctrl+V / Cmd+V)
 - [ ] previsualización A/B (original vs WebP lado a lado)
-- [ ] open graph tags para compartir en redes
+- [x] open graph tags para compartir en redes
 - [x] drag & drop para reordenar imágenes antes del ZIP
+- [x] GIF animado → WebP animado
+- [x] quitar archivos / vaciar en ambas vistas
