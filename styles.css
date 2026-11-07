@@ -1,3 +1,8 @@
+/* Inknut Antiqua, servida desde aquí (antes desde Google Fonts): fonts/, subconjunto latino */
+@font-face { font-family: 'Inknut Antiqua'; font-weight: 400; font-display: swap; src: url(fonts/inknut-400.woff2) format('woff2'); }
+@font-face { font-family: 'Inknut Antiqua'; font-weight: 500; font-display: swap; src: url(fonts/inknut-500.woff2) format('woff2'); }
+@font-face { font-family: 'Inknut Antiqua'; font-weight: 600; font-display: swap; src: url(fonts/inknut-600.woff2) format('woff2'); }
+
 [hidden] {
   display: none !important;
 }
@@ -253,10 +258,36 @@ body {
   color: var(--text-muted);
 }
 
-.progress-info span:last-child {
+.progress-failed {
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  color: var(--error);
+  overflow-wrap: anywhere;
+}
+
+/* Sin WebP en este navegador: la zona sólo lleva a "solo renombrar". */
+.upload-area.is-disabled .upload-icon,
+.upload-area.is-disabled h3 {
+  opacity: 0.4;
+}
+
+.progress-info span:last-of-type {
+  margin-left: auto;
   font-weight: 600;
   color: var(--text);
 }
+
+.progress-close {
+  margin-left: 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.progress-close:hover { color: var(--text); }
 
 .progress-bar {
   width: 100%;

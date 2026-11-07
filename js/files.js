@@ -5,17 +5,25 @@ import { naturalCompare } from './utils.js';
 
 const SYSTEM_FILES = new Set(['thumbs.db', 'desktop.ini', 'icon\r']);
 
-// .DS_Store, ._foto.jpg (AppleDouble), Thumbs.db, desktop.ini...
+// .DS_Store, ._foto.jpg (AppleDouble), Thumbs.db, desktop.ini... y lo que
+// venga de carpetas ocultas (.git/) al elegir una carpeta con el selector.
 export function isJunkFile(file) {
-  return file.name.startsWith('.') || SYSTEM_FILES.has(file.name.toLowerCase());
+  return /(^|\/)\./.test(file.webkitRelativePath || file.name) || SYSTEM_FILES.has(file.name.toLowerCase());
 }
 
+// Quita la basura y ordena por nombre (orden natural): el selector y el
+// portapapeles dan los archivos en el orden del sistema, y aquí el orden es
+// la numeración. Con carpeta elegida en el selector, por la ruta.
 export function cleanFileList(fileList) {
-  return Array.from(fileList || []).filter((f) => !isJunkFile(f));
+  const path = (f) => f.webkitRelativePath || f.name;
+  return Array.from(fileList || [])
+    .filter((f) => !isJunkFile(f))
+    .sort((a, b) => naturalCompare(path(a), path(b)));
 }
 
 // Extrae los archivos de un DataTransfer recorriendo carpetas.
-// - Los elementos soltados mantienen el orden en que llegan.
+// - Los elementos soltados se ordenan por nombre (orden natural), porque llegan
+//   en el orden que decida el sistema.
 // - El contenido de cada carpeta se ordena por nombre (orden natural), porque
 //   readEntries no garantiza ningún orden y aquí el orden es la numeración.
 // - Se recorre en secuencia (no Promise.all) para que el orden sea determinista.
@@ -33,6 +41,7 @@ export async function getFilesFromDataTransfer(dataTransfer) {
     const source = item.webkitGetAsEntry() || item.getAsFile();
     if (source) sources.push(source);
   }
+  sources.sort((a, b) => naturalCompare(a.name, b.name));
   const files = [];
   for (const source of sources) {
     if (source instanceof File) files.push(source);
@@ -61,6 +70,9 @@ async function collectFiles(entry, out) {
   children.sort((a, b) => naturalCompare(a.name, b.name));
   for (const child of children) await collectFiles(child, out);
 }
+
+// Para ignorar el mismo archivo soltado dos veces: mismo nombre, tamaño y fecha.
+export const fileKey = (file) => `${file.name}|${file.size}|${file.lastModified}`;
 
 export function hasFiles(dataTransfer) {
   return Array.from(dataTransfer?.types || []).includes('Files');

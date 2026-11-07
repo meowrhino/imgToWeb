@@ -1,9 +1,9 @@
 // Utilidades genéricas sin estado.
 
+// También comillas: se usa dentro de atributos (title, aria-label).
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  return String(text).replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
 }
 
 export function formatSize(bytes) {

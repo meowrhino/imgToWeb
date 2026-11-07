@@ -3,7 +3,7 @@
 
 import { initConvertView } from './convert-view.js';
 import { initRenameView } from './rename-view.js';
-import { getFilesFromDataTransfer, hasFiles, isJunkFile } from './files.js';
+import { cleanFileList, getFilesFromDataTransfer, hasFiles } from './files.js';
 import { notify } from './notify.js';
 import { plural } from './utils.js';
 import { supportsWebpEncoding } from './webp.js';
@@ -36,11 +36,12 @@ document.addEventListener('drop', async (e) => {
 
 // Pegar (Ctrl+V / Cmd+V) va a la vista activa.
 document.addEventListener('paste', (e) => {
-  const files = Array.from(e.clipboardData?.files || []).filter((f) => !isJunkFile(f));
+  const files = cleanFileList(e.clipboardData?.files);
   if (!files.length) return;
   e.preventDefault();
-  active.addFiles(files);
-  notify(`${plural(files.length, 'archivo pegado', 'archivos pegados')} desde el portapapeles`, 'info');
+  // Sólo si entró alguno: si no, ya avisa addFiles (formato no soportado, repetidas).
+  const added = active.addFiles(files);
+  if (added) notify(`${plural(added, 'archivo pegado', 'archivos pegados')} desde el portapapeles`, 'info');
 });
 
 // Aviso si el navegador no puede generar WebP (Safari en Mac y cualquier

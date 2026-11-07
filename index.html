@@ -14,9 +14,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inknut+Antiqua:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -37,9 +34,11 @@
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
         <h3>arrastra imágenes o carpetas aquí</h3>
-        <p>o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/heic/tiff</p>
+        <p id="uploadHint">o haz clic para seleccionar archivos jpg/png/gif/bmp/avif/webp/heic/tiff</p>
         <button type="button" class="btn-primary" id="selectBtn">seleccionar archivos</button>
-        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/bmp,image/avif,image/heic,image/heif,.heic,.heif,image/tiff,.tif,.tiff" multiple hidden>
+        <button type="button" class="btn-secondary" id="folderBtn">elegir carpeta</button>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/bmp,image/avif,image/webp,image/heic,image/heif,.heic,.heif,image/tiff,.tif,.tiff" multiple hidden>
+        <input type="file" id="folderInput" webkitdirectory hidden>
       </div>
 
       <div class="convert-options">
@@ -63,10 +62,12 @@
         <div class="progress-info">
           <span id="progressText">convirtiendo...</span>
           <span id="progressCount">0/0</span>
+          <button type="button" class="progress-close" id="progressClose" aria-label="cerrar el resumen" hidden>×</button>
         </div>
-        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressBar">
+        <div class="progress-bar" role="progressbar" aria-label="progreso de la conversión" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressBar">
           <div class="progress-fill" id="progressFill"></div>
         </div>
+        <p id="progressFailed" class="progress-failed" hidden></p>
       </div>
 
       <!-- Images Grid -->
@@ -98,7 +99,9 @@
         <h3>solo renombrar</h3>
         <p>arrastra cualquier archivo o carpeta para renumerarlo (1, 2, 3...) sin convertir</p>
         <button type="button" class="btn-primary" id="renameSelectBtn">seleccionar archivos</button>
+        <button type="button" class="btn-secondary" id="renameFolderBtn">elegir carpeta</button>
         <input type="file" id="renameFileInput" multiple hidden>
+        <input type="file" id="renameFolderInput" webkitdirectory hidden>
       </div>
 
       <button type="button" class="btn-secondary mode-switch" id="switchToConvert">← convertir a webp</button>

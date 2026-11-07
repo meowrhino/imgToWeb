@@ -3,11 +3,13 @@
 const VISIBLE_MS = 3000;
 const FADE_MS = 300;
 
+// Apila de abajo arriba según la altura real (un aviso largo ocupa dos líneas).
 function restack() {
-  const all = document.querySelectorAll('.notification');
-  all.forEach((n, i) => {
-    n.style.bottom = `${1.5 + (all.length - 1 - i) * 3.5}rem`;
-  });
+  let bottom = 24;
+  for (const n of [...document.querySelectorAll('.notification')].reverse()) {
+    n.style.bottom = `${bottom}px`;
+    bottom += n.offsetHeight + 8;
+  }
 }
 
 export function notify(message, type = 'info') {

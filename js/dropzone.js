@@ -2,18 +2,25 @@
 
 import { cleanFileList, getFilesFromDataTransfer, hasFiles } from './files.js';
 
-export function setupDropzone({ area, input, button, onFiles }) {
-  button.addEventListener('click', (e) => {
-    e.stopPropagation();
-    input.click();
+export function setupDropzone({ area, input, button, folderInput, folderButton, onFiles }) {
+  for (const [btn, inp] of [[button, input], [folderButton, folderInput]]) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      inp.click();
+    });
+    inp.addEventListener('change', () => {
+      const files = cleanFileList(inp.files);
+      inp.value = '';
+      if (files.length) onFiles(files);
+    });
+  }
+  // Los clic de los input (input.click()) también suben hasta aquí: ignorarlos,
+  // o el de carpeta abriría además el selector de archivos.
+  area.addEventListener('click', (e) => {
+    if (!(e.target instanceof HTMLInputElement)) input.click();
   });
-  area.addEventListener('click', () => input.click());
-
-  input.addEventListener('change', () => {
-    const files = cleanFileList(input.files);
-    input.value = '';
-    if (files.length) onFiles(files);
-  });
+  // Elegir carpeta (webkitdirectory) no existe en todos los navegadores.
+  if (!('webkitdirectory' in folderInput)) folderButton.hidden = true;
 
   area.addEventListener('dragover', (e) => {
     if (!hasFiles(e.dataTransfer)) return;

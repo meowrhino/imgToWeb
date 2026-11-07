@@ -1,7 +1,9 @@
 // Vista "solo renombrar": renumera archivos cualquiera (1, 2, 3...) sin convertir.
 
 import { setupDropzone } from './dropzone.js';
+import { fileKey } from './files.js';
 import { makeSortable, reorderById } from './sortable.js';
+import { notify } from './notify.js';
 import { downloadZip } from './zip.js';
 import { escapeHtml, getExtension, naturalCompare, plural } from './utils.js';
 
@@ -11,6 +13,8 @@ const dom = {
   uploadArea: $('renameUploadArea'),
   fileInput: $('renameFileInput'),
   selectBtn: $('renameSelectBtn'),
+  folderInput: $('renameFolderInput'),
+  folderBtn: $('renameFolderBtn'),
   container: $('renameContainer'),
   list: $('renameList'),
   count: $('renameCount'),
@@ -65,8 +69,19 @@ function render() {
 }
 
 function addFiles(files) {
-  state.items.push(...files.map((file) => ({ id: nextId++, file })));
+  const seen = new Set(state.items.map(({ file }) => fileKey(file)));
+  let repeated = 0;
+  for (const file of files) {
+    if (seen.has(fileKey(file))) {
+      repeated++;
+      continue;
+    }
+    seen.add(fileKey(file));
+    state.items.push({ id: nextId++, file });
+  }
+  if (repeated) notify(`${plural(repeated, 'archivo repetido ignorado', 'archivos repetidos ignorados')} (ya estaba en la lista)`, 'info');
   render();
+  return files.length - repeated;
 }
 
 function removeItem(id) {
@@ -75,6 +90,7 @@ function removeItem(id) {
 }
 
 function clearAll() {
+  if (state.items.length && !confirm('¿vaciar la lista? se quitan todos los archivos.')) return;
   state.items = [];
   render();
 }
@@ -89,7 +105,7 @@ function download() {
 }
 
 export function initRenameView() {
-  setupDropzone({ area: dom.uploadArea, input: dom.fileInput, button: dom.selectBtn, onFiles: addFiles });
+  setupDropzone({ area: dom.uploadArea, input: dom.fileInput, button: dom.selectBtn, folderInput: dom.folderInput, folderButton: dom.folderBtn, onFiles: addFiles });
 
   for (const radio of dom.orderRadios) {
     radio.addEventListener('change', () => {
