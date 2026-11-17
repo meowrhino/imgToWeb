@@ -66,19 +66,14 @@ function loadImage(blob) {
   });
 }
 
+// Sólo llega aquí si el navegador no lo lee solo (Chrome, Firefox): Safari sí.
 async function decodeHeic(file) {
   const heic2any = await loadLib('heic2any');
-  let out;
-  try {
-    // PNG intermedio (sin pérdida) para no comprimir dos veces.
-    out = await heic2any({ blob: file, toType: 'image/png' });
-  } catch {
-    // Muchos .heic son JPEG con otra extensión ("already browser readable"),
-    // y heic2any a veces rechaza con un string: probamos la carga normal.
-    return loadImage(file).catch(() => {
-      throw new Error('no se pudo leer el heic');
-    });
-  }
+  // PNG intermedio (sin pérdida) para no comprimir dos veces. heic2any a veces
+  // rechaza con un string, no con un Error.
+  const out = await heic2any({ blob: file, toType: 'image/png' }).catch(() => {
+    throw new Error('no se pudo leer el heic');
+  });
   return loadImage(Array.isArray(out) ? out[0] : out);
 }
 
@@ -138,9 +133,9 @@ async function decodeTiff(file) {
   return orient(canvas, page.t274?.[0]);
 }
 
-async function convertStatic(source, srcWidth, srcHeight, { quality, maxDimension }) {
+async function convertStatic(source, srcWidth, srcHeight, { quality, maxDimension, jpegFallback }) {
   const size = fitWithin(srcWidth, srcHeight, maxDimension);
-  const blob = await canvasToWebp(drawScaled(source, size), quality);
+  const blob = await canvasToWebp(drawScaled(source, size), quality, jpegFallback);
   return { blob, originalDimensions: { width: srcWidth, height: srcHeight }, dimensions: size, frames: 1 };
 }
 
@@ -191,14 +186,20 @@ async function convertAnimated(file, type, options) {
   }
 }
 
-// options: { quality: 0–1, maxDimension: px }
+// options: { quality: 0–1, maxDimension: px, jpegFallback: ver webp.js }
+// OJO: pepe y lasadcum cargan este archivo desde la web publicada
+// (meowrhino.github.io/imgToWeb/js/converter.js) para comprimir lo que suben.
+// Si cambian el nombre del archivo, el de la función, sus opciones o lo que
+// devuelve (blob, dimensions), hay que cambiar también su js/admin.js.
 export async function convertToWebp(file, options) {
   if (isTiff(file)) {
     const canvas = await decodeTiff(file);
     return convertStatic(canvas, canvas.width, canvas.height, options);
   }
   const webp = isWebp(file) ? await sniffWebp(file) : { real: false };
-  const img = isHeic(file) ? await decodeHeic(file) : await loadImage(file);
+  // Primero la carga normal: Safari lee HEIC, y muchos .heic son JPEG con otra
+  // extensión. heic2any (1,3 MB) sólo si hace falta.
+  const img = isHeic(file) ? await loadImage(file).catch(() => decodeHeic(file)) : await loadImage(file);
   const size = { width: img.naturalWidth, height: img.naturalHeight };
   // Un WebP que ya cabe se devuelve tal cual: recomprimirlo sólo pierde calidad
   // (y un animado saldría fijo).

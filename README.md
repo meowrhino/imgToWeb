@@ -43,6 +43,7 @@ js/convert-view.js  vista convertir: cola, tarjetas, nombres, ZIP
 js/rename-view.js   vista solo renombrar
 js/converter.js     decodificar (HEIC/TIFF/GIF/resto) → reescalar → WebP
 js/webp.js          detección de soporte, canvas→WebP, montaje de WebP animado
+js/webp/            códec WebP en wasm (@jsquash/webp 1.5.0, Apache-2.0, copiado tal cual): para WebKit
 js/files.js         leer archivos/carpetas del drop, filtrar .DS_Store y similares
 js/dropzone.js      zona de subida (clic, selector, drag & drop)
 js/sortable.js      reordenado con SortableJS
@@ -51,6 +52,18 @@ js/loaders.js       carga bajo demanda de heic2any, UTIF y pako
 js/notify.js        notificaciones
 js/utils.js         utilidades
 ```
+
+## Quién más usa el conversor
+`js/converter.js` (`convertToWebp`) no toca la interfaz, y **pepe y lasadcum lo cargan desde aquí**
+(`https://meowrhino.github.io/imgToWeb/js/converter.js`) para comprimir las fotos que se suben en su
+`/admin/`: no tienen copia. Lo que se publique aquí les llega solo, en unos 10 minutos (la caché de
+GitHub Pages). Por eso:
+- Un fallo en `converter.js`, `webp.js` o `loaders.js` rompe también la subida de fotos de esas webs.
+- Si cambia la dirección de esta web, el nombre del archivo o de la función, sus opciones
+  (`quality`, `maxDimension`, `jpegFallback`) o lo que devuelve (`blob`, `dimensions`), hay que
+  cambiar el `js/admin.js` de las dos.
+- Allí sí se hace WebP en Safari y en el iPhone, con `js/webp/`. Aquí la vista de convertir sigue
+  cerrada en WebKit (el aviso de arriba).
 
 ## Notas
 - Con el renombrado secuencial desactivado, los nombres repetidos se desambiguan (`nombre.webp`, `nombre-2.webp`, ...) igual en la tarjeta, la descarga individual y el ZIP.

@@ -13,15 +13,41 @@ export function supportsWebpEncoding() {
   return encodingSupported;
 }
 
-export function canvasToWebp(canvas, quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) reject(new Error('el navegador no pudo codificar la imagen'));
-      // Nunca descargar un PNG disfrazado de .webp.
-      else if (blob.type !== 'image/webp') reject(new Error('tu navegador no sabe exportar a WebP'));
-      else resolve(blob);
-    }, 'image/webp', quality);
-  });
+const toBlob = (canvas, type, quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+
+// Donde canvas no sabe (WebKit), el códec de Squoosh en wasm: js/webp/, copiado
+// tal cual de @jsquash/webp 1.5.0 (Apache-2.0). Se carga la primera vez que
+// hace falta (280 KB) y encuentra su .wasm solo, al lado.
+let codec = null;
+async function wasmToWebp(canvas, quality) {
+  codec ??= Promise.all([import('./webp/webp_enc.js'), import('./webp/meta.js')])
+    .then(async ([enc, meta]) => [await enc.default({ noInitialRun: true }), meta.defaultOptions])
+    .catch((e) => {
+      codec = null;
+      throw e;
+    });
+  const [module, defaults] = await codec;
+  const { data, width, height } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+  const out = module.encode(data, width, height, { ...defaults, quality: Math.round(quality * 100) });
+  if (!out?.byteLength) throw new Error('webp vacío');
+  return new Blob([out], { type: 'image/webp' });
+}
+
+// jpegFallback: si tampoco carga el códec, sale JPEG en vez de fallar. Es para
+// las webs que suben la foto a su servidor (pepe, lasadcum); imgToWeb no lo
+// pide: nunca descarga otra cosa disfrazada de .webp.
+export async function canvasToWebp(canvas, quality, jpegFallback = false) {
+  let blob = await toBlob(canvas, 'image/webp', quality);
+  if (!blob) throw new Error('el navegador no pudo codificar la imagen');
+  if (blob.type !== 'image/webp') {
+    blob = await wasmToWebp(canvas, quality).catch((e) => {
+      if (!jpegFallback) throw new Error('tu navegador no sabe exportar a WebP');
+      console.warn('sin webp en wasm:', e);
+      return toBlob(canvas, 'image/jpeg', quality);
+    });
+  }
+  if (!blob) throw new Error('el navegador no pudo codificar la imagen');
+  return blob;
 }
 
 // ---------------------------------------------------------------------------
